@@ -1,0 +1,11 @@
+[package]
+name = "embedonomicon"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "embedonomicon"
+test = false
+bench = false
+
+[dependencies]
