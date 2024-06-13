@@ -1,11 +1,9 @@
-[package]
-name = "embedonomicon"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = ["rt", "app"]
+resolver = "2"
 
-[[bin]]
-name = "embedonomicon"
-test = false
-bench = false
-
-[dependencies]
+[profile.release]
+codegen-units = 1
+debug = false
+lto = true
+opt-level = 3

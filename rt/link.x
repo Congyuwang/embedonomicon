@@ -1,0 +1,65 @@
+/* Memory layout of the LM3S6965 microcontroller */
+/* 1K = 1 KiBi = 1024 bytes */
+MEMORY
+{
+  FLASH : ORIGIN = 0x00000000, LENGTH = 256K
+  RAM : ORIGIN = 0x20000000, LENGTH = 64K
+}
+
+/* The entry point is the reset handler */
+ENTRY(Reset);
+
+EXTERN(RESET_VECTOR);
+
+SECTIONS
+{
+  .vector_table ORIGIN(FLASH) :
+  {
+    /* First entry: initial Stack Pointer value */
+    LONG(ORIGIN(RAM) + LENGTH(RAM));
+
+    /* Second entry: reset vector */
+    KEEP(*(.vector_table.reset_vector));
+  } > FLASH
+
+  .text :
+  {
+    *(.text .text.*);
+  } > FLASH
+
+  .rodata :
+  {
+    *(.rodata .rodata.*);
+  } > FLASH
+
+  .bss :
+  {
+    _sbss = .;
+    *(.bss .bss.*);
+    _ebss = .;
+  } > RAM
+
+  /*
+   * We set the Load Memory Address (LMA) of the .data section
+   * to the end of the .rodata section. The .data contains
+   * static variables with a non-zero initial value;
+   * the Virtual Memory Address (VMA) of the .data section is somewhere in RAM
+   * -- this is where the static variables are located.
+   * The initial values of those static variables, however,
+   * must be allocated in non volatile memory (Flash);
+   * the LMA is where in Flash those initial values are stored.
+  */
+  .data : AT(ADDR(.rodata) + SIZEOF(.rodata))
+  {
+    _sdata = .;
+    *(.data .data.*);
+    _edata = .;
+  } > RAM
+
+  _sidata = LOADADDR(.data);
+
+  /DISCARD/ :
+  {
+    *(.ARM.exidx .ARM.exidx.*);
+  }
+}
