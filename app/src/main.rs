@@ -1,37 +1,46 @@
 #![no_main]
 #![no_std]
 
+use cortex_m::interrupt;
 use cortex_m_semihosting::{
     debug,
     hio::{self, HostStream},
 };
-
-use log::{error, warn, Log};
+use log::{global_logger, log, GlobalLog};
 use rt::entry;
 
-struct Logger {
-    hstdout: HostStream,
-}
+struct Logger;
 
-impl Log for Logger {
-    type Error = ();
-
-    fn log(&mut self, address: u8) -> Result<(), ()> {
-        self.hstdout.write_all(&[address])
-    }
-}
+global_logger!(Logger);
 
 entry!(main);
 
 fn main() -> ! {
-    let hstdout = hio::hstdout().unwrap();
-    let mut logger = Logger { hstdout };
+    log!("Hello, world!");
 
-    let _ = warn!(logger, "Hello, world!");
-
-    let _ = error!(logger, "Goodbye");
+    log!("Goodbye");
 
     debug::exit(debug::EXIT_SUCCESS);
 
     loop {}
+}
+
+impl GlobalLog for Logger {
+    fn log(&self, address: u8) {
+        // we use a critical section (`interrupt::free`) to make the access to the
+        // `static mut` variable interrupt safe which is required for memory safety
+        interrupt::free(|_| unsafe {
+            static mut HOST_STREAM: Option<HostStream> = None;
+
+            // lazy initialization
+            if HOST_STREAM.is_none() {
+                HOST_STREAM = Some(hio::hstdout()?);
+            }
+
+            let hstdout = HOST_STREAM.as_mut().unwrap();
+
+            hstdout.write_all(&[address])
+        })
+        .ok();
+    }
 }
