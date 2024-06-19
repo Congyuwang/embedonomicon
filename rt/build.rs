@@ -10,5 +10,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     // put `link.x` in the build directory
     File::create(out_dir.join("link.x"))?.write_all(include_bytes!("link.x"))?;
 
+    // assemble the `asm.s` file
+    cc::Build::new().file("asm.s").compile("asm");
+
+    // rebuild if `asm.s` changed
+    println!("cargo:rerun-if-changed=asm.s");
+
     Ok(())
 }
