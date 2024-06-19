@@ -9,4 +9,6 @@ test = false
 bench = false
 
 [dependencies]
+cortex-m-semihosting = "0.5.0"
 rt = { path = "../rt" }
+log = { path = "../log" }
