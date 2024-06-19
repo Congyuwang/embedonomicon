@@ -10,6 +10,7 @@ MEMORY
 ENTRY(Reset);
 
 EXTERN(RESET_VECTOR);
+EXTERN(EXCEPTIONS);
 
 SECTIONS
 {
@@ -20,6 +21,9 @@ SECTIONS
 
     /* Second entry: reset vector */
     KEEP(*(.vector_table.reset_vector));
+
+    /* The next 14 entries are exception vectors */
+    KEEP(*(.vector_table.exceptions));
   } > FLASH
 
   .text :
@@ -48,7 +52,7 @@ SECTIONS
    * The initial values of those static variables, however,
    * must be allocated in non volatile memory (Flash);
    * the LMA is where in Flash those initial values are stored.
-  */
+   */
   .data : AT(ADDR(.rodata) + SIZEOF(.rodata))
   {
     _sdata = .;
@@ -63,3 +67,18 @@ SECTIONS
     *(.ARM.exidx .ARM.exidx.*);
   }
 }
+
+/* PROVIDE only takes effect when the symbol to the left
+ * of the equal sign is still undefined after inspecting
+ * all the input object files.
+ * This is the scenario where the user didn't implement
+ * the handler for the respective exception.
+ */
+PROVIDE(NMI = DefaultExceptionHandler);
+PROVIDE(HardFault = DefaultExceptionHandler);
+PROVIDE(MemManage = DefaultExceptionHandler);
+PROVIDE(BusFault = DefaultExceptionHandler);
+PROVIDE(UsageFault = DefaultExceptionHandler);
+PROVIDE(SVCall = DefaultExceptionHandler);
+PROVIDE(PendSV = DefaultExceptionHandler);
+PROVIDE(SysTick = DefaultExceptionHandler);
